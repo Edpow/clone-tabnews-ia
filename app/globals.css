@@ -154,10 +154,40 @@ body {
 }
 
 .mensagem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   min-height: 1.3rem;
   margin: 0;
   font-size: 0.95rem;
   font-weight: bold;
+}
+
+.aceitar {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 0.15rem 0.6rem;
+  border: 2px solid #51cf66;
+  border-radius: 0.6rem;
+  background-color: #ffffff;
+  color: #2b8a3e;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.aceitar:hover {
+  background-color: #d3f9d8;
+}
+
+.aceitar:active {
+  transform: scale(0.95);
+}
+
+.aceitar:focus-visible {
+  outline: 3px solid #2d6cdf;
+  outline-offset: 2px;
 }
 
 .mensagem.ouvindo {

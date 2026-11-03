@@ -3,12 +3,37 @@
 // A API não faz parte do lib.dom do TypeScript, então os tipos mínimos
 // são declarados aqui. Cada chamada invalida a anterior (contador de
 // geração), para cliques rápidos não misturarem respostas.
+//
+// Estratégia de captura: continuous + interimResults acumulam tudo o que
+// aparecer (inclusive texto parcial, melhor para sílabas curtas) e a
+// entrega acontece no 1º resultado final. Sem nada em 6s, a escuta
+// termina e uma lista vazia é entregue — a interface responde
+// "Não consegui ouvir" em vez de ficar em silêncio.
 
 type Opcoes = {
   aoIniciar?: () => void;
   aoTranscrever?: (transcricoes: string[]) => void;
   aoEncerrar?: () => void;
   aoErro?: (tipo: string) => void;
+};
+
+type Alternativa = {
+  transcript: string;
+};
+
+type EventoResultado = {
+  results: {
+    length: number;
+    [indice: number]: {
+      length: number;
+      isFinal: boolean;
+      [alternativa: number]: Alternativa;
+    };
+  };
+};
+
+type EventoErro = {
+  error: string;
 };
 
 type Reconhecimento = {
@@ -24,24 +49,13 @@ type Reconhecimento = {
   stop: () => void;
 };
 
-type EventoResultado = {
-  results: {
-    length: number;
-    [indice: number]: {
-      length: number;
-      [alternativa: number]: { transcript: string };
-    };
-  };
-};
-
-type EventoErro = {
-  error: string;
-};
-
 type ConstrutorReconhecimento = new () => Reconhecimento;
+
+const TEMPO_MAXIMO_MS = 6000;
 
 let geracao = 0;
 let atual: Reconhecimento | null = null;
+let timeout: ReturnType<typeof setTimeout> | null = null;
 
 function construtor(): ConstrutorReconhecimento | null {
   if (typeof window === "undefined") return null;
@@ -65,17 +79,37 @@ export function ouvir(opcoes: Opcoes = {}): void {
 
   const reconhecimento = new Construtor();
   reconhecimento.lang = "pt-BR";
-  reconhecimento.interimResults = false;
-  reconhecimento.maxAlternatives = 5;
-  reconhecimento.continuous = false;
+  reconhecimento.interimResults = true;
+  reconhecimento.continuous = true;
+  reconhecimento.maxAlternatives = 10;
   atual = reconhecimento;
 
   let finalizado = false;
+  let entregue = false;
+  const transcricoes: string[] = [];
+
+  const entregar = () => {
+    if (entregue) return;
+    entregue = true;
+    opcoes.aoTranscrever?.([...transcricoes]);
+  };
+
   const encerrar = (erro?: string) => {
     if (finalizado || minhaGeracao !== geracao) return;
     finalizado = true;
     atual = null;
-    if (erro) opcoes.aoErro?.(erro);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    if (erro) {
+      // Erro sem transcrição: repassa o tipo para a interface tratar.
+      if (!entregue) opcoes.aoErro?.(erro);
+    } else if (!entregue) {
+      // Fim de escuta sem transcrição nenhuma: entrega lista vazia para
+      // a interface responder "Não consegui ouvir" (nunca fica mudo).
+      entregar();
+    }
     opcoes.aoEncerrar?.();
   };
 
@@ -85,18 +119,38 @@ export function ouvir(opcoes: Opcoes = {}): void {
 
   reconhecimento.onresult = (evento) => {
     if (minhaGeracao !== geracao) return;
-    const transcricoes: string[] = [];
+    let temFinal = false;
     for (let i = 0; i < evento.results.length; i++) {
       const resultado = evento.results[i];
       for (let j = 0; j < resultado.length; j++) {
-        transcricoes.push(resultado[j].transcript);
+        const texto = resultado[j].transcript;
+        if (texto && !transcricoes.includes(texto)) {
+          transcricoes.push(texto);
+        }
+      }
+      if (resultado.isFinal) temFinal = true;
+    }
+    if (temFinal) {
+      entregar();
+      try {
+        reconhecimento.stop();
+      } catch {
+        // já parado
       }
     }
-    opcoes.aoTranscrever?.(transcricoes);
   };
 
   reconhecimento.onerror = (evento) => encerrar(evento.error);
   reconhecimento.onend = () => encerrar();
+
+  timeout = setTimeout(() => {
+    if (minhaGeracao !== geracao) return;
+    try {
+      reconhecimento.stop();
+    } catch {
+      // já parado
+    }
+  }, TEMPO_MAXIMO_MS);
 
   try {
     reconhecimento.start();
@@ -107,6 +161,10 @@ export function ouvir(opcoes: Opcoes = {}): void {
 
 export function parar(): void {
   geracao++; // callbacks da escuta atual passam a ser ignorados
+  if (timeout) {
+    clearTimeout(timeout);
+    timeout = null;
+  }
   if (atual) {
     const reconhecimento = atual;
     atual = null;

@@ -21,6 +21,9 @@ type Feedback = {
   alvo: Alvo | null;
   status: "correto" | "errado" | "aviso";
   texto: string;
+  // Mostra o botão "Está certo ✓" quando o reconhecimento pode estar
+  // errado (erros do reconhecimento e acertos manuais).
+  aceitavel?: boolean;
 };
 
 export default function NameCard({
@@ -111,14 +114,20 @@ export default function NameCard({
       : [textoFalado(alvo), silabasExibidas[alvo]];
   }
 
+  // Palavra inteira não vale quando o alvo é uma sílaba
+  // (dizer "Ellen"/"Élen" para a sílaba "El" continua erro).
+  function rejeitar(alvo: Alvo): string[] {
+    return alvo === "palavra" ? [] : [nome, pronuncia ?? ""];
+  }
+
   function agendarLimpeza() {
     if (feedbackRef.current) clearTimeout(feedbackRef.current);
     feedbackRef.current = setTimeout(() => setFeedback(null), 3000);
   }
 
-  function mostrarAviso(texto: string) {
+  function mostrarAviso(alvo: Alvo, texto: string, aceitavel: boolean) {
     setOuvindo(null);
-    setFeedback({ alvo: null, status: "aviso", texto });
+    setFeedback({ alvo, status: "aviso", texto, aceitavel });
     falar(texto);
     agendarLimpeza();
   }
@@ -128,35 +137,56 @@ export default function NameCard({
 
     const semConteudo = transcricoes.every((t) => t.trim() === "");
     if (semConteudo) {
-      mostrarAviso("Não consegui ouvir. Tente de novo");
+      mostrarAviso(alvo, "Não consegui ouvir. Tente de novo", true);
       return;
     }
 
-    const acertou = falouCorreto(esperados(alvo), transcricoes);
+    const ouvida = transcricoes[0].trim();
+    const acertou = falouCorreto(esperados(alvo), transcricoes, {
+      rejeitar: rejeitar(alvo),
+    });
     setOuvindo(null);
     setFeedback({
       alvo,
       status: acertou ? "correto" : "errado",
-      texto: acertou ? "Muito bem! ✅" : "Tente de novo ❌",
+      texto: acertou
+        ? "Muito bem! ✅"
+        : `Ouvi: "${ouvida}" — Tente de novo ❌`,
+      aceitavel: !acertou,
     });
     falar(acertou ? "Muito bem!" : "Tente de novo");
     agendarLimpeza();
   }
 
-  function aoErro(erro: string) {
+  function aoErro(erro: string, alvo: Alvo) {
     if (
       erro === "not-allowed" ||
       erro === "service-not-allowed" ||
       erro === "audio-capture"
     ) {
-      mostrarAviso("Preciso do microfone para ouvir você");
+      mostrarAviso(alvo, "Preciso do microfone para ouvir você", false);
     } else if (erro === "no-speech") {
-      mostrarAviso("Não consegui ouvir. Tente de novo");
+      mostrarAviso(alvo, "Não consegui ouvir. Tente de novo", true);
     } else if (erro === "network") {
-      mostrarAviso("Sem conexão para reconhecer a fala");
+      mostrarAviso(alvo, "Sem conexão para reconhecer a fala", false);
     } else {
       setOuvindo(null);
     }
+  }
+
+  // Saída manual: o reconhecimento pode errar; a criança (ou um adulto)
+  // confirma mesmo assim e recebe o mesmo acerto visual e falado.
+  function aceitarManual() {
+    const alvo = feedback?.alvo ?? null;
+    setOuvindo(null);
+    setFeedback({
+      alvo,
+      status: "correto",
+      texto: "Muito bem! ✅",
+      aceitavel: false,
+    });
+    falar("Muito bem!");
+    agendarLimpeza();
   }
 
   function aoPraticar(alvo: Alvo) {
@@ -166,7 +196,7 @@ export default function NameCard({
     setOuvindo(alvo);
     ouvir({
       aoTranscrever: (transcricoes) => aoTranscrever(transcricoes, alvo),
-      aoErro,
+      aoErro: (erro) => aoErro(erro, alvo),
       aoEncerrar: () => setOuvindo(null),
     });
   }
@@ -280,6 +310,11 @@ export default function NameCard({
 
       <p className={`mensagem ${classeMensagem}`} aria-live="polite">
         {textoMensagem}
+        {feedback?.aceitavel && (
+          <button type="button" className="aceitar" onClick={aceitarManual}>
+            Está certo ✓
+          </button>
+        )}
       </p>
     </div>
   );

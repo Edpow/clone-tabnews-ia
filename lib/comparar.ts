@@ -6,7 +6,11 @@
 // 2. alguma palavra da transcrição igual ao esperado;
 // 3. diferença de até 1 caractere (Levenshtein) — "ry" ≈ "ri";
 // 4. palavra que começa com o esperado, se ele tiver >= 3 letras
-//    ("len" ≈ "lendo", mas "ta" não aceita "também").
+//    ("len" ≈ "lendo", mas "ta" não aceita "também");
+// 5. palavra que termina com o esperado — pega o erro comum do
+//    reconhecedor de acrescentar sílabas antes ("está" ≈ "ta").
+// A palavra inteira ("Ryan"/"Rian") é passada em `rejeitar` quando o
+// alvo é uma sílaba e não conta como acerto.
 
 export function normalizar(texto: string): string {
   return texto
@@ -40,11 +44,15 @@ function distanciaLevenshtein(a: string, b: string): number {
 }
 
 // esperados: formas aceitas do alvo (ex.: ["Ri", "Ry"] ou ["Rian", "Ryan"]).
+// opcoes.rejeitar: formas da palavra inteira (ex.: ["Ryan", "Rian"]) —
+// dizer a palavra inteira quando o alvo é uma sílaba não conta como acerto.
 export function falouCorreto(
   esperados: string[],
   transcricoes: string[],
+  opcoes: { rejeitar?: string[] } = {},
 ): boolean {
   const alvos = esperados.map(normalizar).filter(Boolean);
+  const proibidos = (opcoes.rejeitar ?? []).map(normalizar).filter(Boolean);
 
   for (const transcricao of transcricoes) {
     const texto = normalizar(transcricao);
@@ -52,12 +60,17 @@ export function falouCorreto(
 
     const candidatos = [texto, ...texto.split(" ")];
 
+    // Palavra inteira falada quando o alvo é uma sílaba: descarta.
+    if (candidatos.some((candidato) => proibidos.includes(candidato))) {
+      continue;
+    }
+
     for (const alvo of alvos) {
       for (const candidato of candidatos) {
         // 1. igualdade exata
         if (candidato === alvo) return true;
 
-        // 3. diferença de até 1 caractere
+        // 3. diferença de até 1 caractere (ry ≈ ri, ela ≈ el)
         if (
           alvo.length >= 2 &&
           distanciaLevenshtein(candidato, alvo) <= 1
@@ -67,6 +80,10 @@ export function falouCorreto(
 
         // 4. começa com o esperado (só para esperados de >= 3 letras)
         if (alvo.length >= 3 && candidato.startsWith(alvo)) return true;
+
+        // 5. termina com o esperado — pega o erro comum do reconhecedor
+        //    de acrescentar sílabas antes ("está" ≈ "ta")
+        if (alvo.length >= 2 && candidato.endsWith(alvo)) return true;
       }
     }
   }
