@@ -6,12 +6,17 @@ import { falar, falarSequencia } from "../../lib/fala";
 
 type Props = {
   nome: string;
-  // Texto falado quando a pronúncia em pt-BR difere da escrita
-  // (ex.: "Ryan" soa "Rian", "Ellen" soa "Élen").
   pronuncia?: string;
+  // true  = a palavra aparece dividida em sílabas clicáveis;
+  // false = a palavra aparece inteira (visão inicial).
+  destacarSilabas: boolean;
 };
 
-export default function NameCard({ nome, pronuncia }: Props) {
+export default function NameCard({
+  nome,
+  pronuncia,
+  destacarSilabas,
+}: Props) {
   const silabasExibidas = silabificar(nome);
   const silabasFaladas = silabificar(pronuncia ?? nome);
   const [ativa, setAtiva] = useState<number | null>(null);
@@ -42,14 +47,25 @@ export default function NameCard({ nome, pronuncia }: Props) {
     return silabasFaladas[indice] ?? silabasExibidas[indice];
   }
 
-  function aoClicarNome() {
-    falarSequencia(
-      silabasExibidas.map((_, indice) => textoFalado(indice)),
-      {
-        aoIniciarSilaba: destacar,
-        aoEncerrar: limparDestaque,
-      },
-    );
+  // Nome inteiro numa fala só, com a pronúncia natural ("Rian", "Élen").
+  function falarNomeCompleto() {
+    falar(pronuncia ?? nome);
+  }
+
+  // Botão 🔊: com as sílabas visíveis, fala sílaba por sílaba destacando
+  // cada uma na sequência; sem sílabas, fala o nome numa fala só.
+  function aoClicarOuvir() {
+    if (destacarSilabas) {
+      falarSequencia(
+        silabasExibidas.map((_, indice) => textoFalado(indice)),
+        {
+          aoIniciarSilaba: destacar,
+          aoEncerrar: limparDestaque,
+        },
+      );
+    } else {
+      falarNomeCompleto();
+    }
   }
 
   function aoClicarSilaba(indice: number) {
@@ -59,28 +75,46 @@ export default function NameCard({ nome, pronuncia }: Props) {
 
   return (
     <div className="cartao">
+      {/* Um único espaço: a palavra inteira ou as sílabas no mesmo lugar. */}
+      <div className="espaco">
+        {destacarSilabas ? (
+          <div
+            className="silabas"
+            role="group"
+            aria-label={`Sílabas de ${nome}`}
+          >
+            {silabasExibidas.map((silaba, indice) => (
+              <button
+                key={`${silaba}-${indice}`}
+                type="button"
+                className={`silaba${ativa === indice ? " ativa" : ""}`}
+                onClick={() => aoClicarSilaba(indice)}
+                aria-label={`Ouvir a sílaba ${silaba}`}
+              >
+                {silaba}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="nome"
+            onClick={falarNomeCompleto}
+            aria-label={`Ouvir o nome ${nome} completo`}
+          >
+            {nome}
+          </button>
+        )}
+      </div>
+
       <button
         type="button"
-        className="nome"
-        onClick={aoClicarNome}
-        aria-label={`Ouvir o nome ${nome} completo`}
+        className="ouvir"
+        onClick={aoClicarOuvir}
+        aria-label={`Tocar o nome ${nome}`}
       >
-        {nome}
+        🔊
       </button>
-
-      <div className="silabas" role="group" aria-label={`Sílabas de ${nome}`}>
-        {silabasExibidas.map((silaba, indice) => (
-          <button
-            key={`${silaba}-${indice}`}
-            type="button"
-            className={`silaba${ativa === indice ? " ativa" : ""}`}
-            onClick={() => aoClicarSilaba(indice)}
-            aria-label={`Ouvir a sílaba ${silaba}`}
-          >
-            {silaba}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

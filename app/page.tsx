@@ -1,6 +1,6 @@
-import NameCard from "./components/NameCard";
+import ListaNomes, { type Nome } from "./components/ListaNomes";
 
-const names = [
+const names: Nome[] = [
   { nome: "Edgar" },
   { nome: "Rita" },
   { nome: "Ryan", pronuncia: "Rian" },
@@ -12,15 +12,10 @@ export default function Home() {
     <main className="pagina">
       <h1 className="titulo">Nomes</h1>
       <p className="dica">
-        Clique no nome para ouvir tudo · clique numa sílaba para ouvir só ela
+        Clique na palavra para ouvir o nome · ative o destaque para tocar cada
+        sílaba
       </p>
-      <ul className="lista">
-        {names.map((name) => (
-          <li key={name.nome}>
-            <NameCard nome={name.nome} pronuncia={name.pronuncia} />
-          </li>
-        ))}
-      </ul>
+      <ListaNomes nomes={names} />
     </main>
   );
 }

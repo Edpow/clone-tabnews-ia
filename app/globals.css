@@ -33,9 +33,67 @@ body {
   color: #555555;
 }
 
+.controle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  font-size: 1rem;
+  color: #333333;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Checkbox real mantido acessível, mas invisível na tela. */
+.interruptor-entrada {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.interruptor {
+  position: relative;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 1.6rem;
+  border-radius: 1rem;
+  background-color: #cbd5e1;
+  transition: background-color 0.15s ease;
+}
+
+.interruptor::after {
+  content: "";
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.interruptor-entrada:checked + .interruptor {
+  background-color: #2d6cdf;
+}
+
+.interruptor-entrada:checked + .interruptor::after {
+  transform: translateX(1.4rem);
+}
+
+.interruptor-entrada:focus-visible + .interruptor {
+  outline: 3px solid #2d6cdf;
+  outline-offset: 2px;
+}
+
 .lista {
   list-style: none;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -57,11 +115,44 @@ body {
   --cor-silaba: #f7a8c4;
 }
 
+/* Um único espaço por nome: a palavra inteira ou as sílabas,
+   sempre no mesmo lugar. */
 .cartao {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.espaco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.6rem;
+}
+
+.ouvir {
+  font-family: inherit;
+  font-size: 1.2rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid #d0d7e2;
+  border-radius: 50%;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+}
+
+.ouvir:hover {
+  background-color: #eceff4;
+  transform: scale(1.06);
+}
+
+.ouvir:active {
+  transform: scale(0.95);
 }
 
 .nome {
