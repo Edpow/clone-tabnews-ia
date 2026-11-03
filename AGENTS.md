@@ -34,6 +34,11 @@ sílabas clicáveis, com fala (síntese) e prática de fala (reconhecimento) em 
   (comparação flexível de transcrições).
 - `index.html` na raiz é uma versão estática legada (anterior à migração
   para Next) e **não é servida** pelo app. Não remover sem perguntar.
+- **Estilos**: Tailwind v4 (`@import "tailwindcss"` + tokens do `DESIGN.md`
+  em `@theme` e classes de componentes como `.syllable-tile`/`.audio-btn` em
+  `@layer components`, tudo em `app/globals.css`). Classes dinâmicas do tipo
+  `tile-${cor}` são seguras: são CSS estático do `globals.css`, não
+  utilities geradas pelo Tailwind (não escaneáveis dinamicamente).
 
 ## Convenções de fala (pegadinhas)
 

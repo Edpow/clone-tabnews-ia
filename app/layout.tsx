@@ -1,8 +1,23 @@
 import type { Metadata } from "next";
+import { Quicksand, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-quicksand",
+});
+
+const nunitoSans = Nunito_Sans({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-nunito",
+});
+
 export const metadata: Metadata = {
-  title: "Nomes",
+  title: "LudoLeitura — Palavras & Sílabas",
+  description:
+    "Aprenda nomes divididos em sílabas: toque para ouvir, pratique a fala e soletere no seu ritmo.",
 };
 
 export default function RootLayout({
@@ -11,8 +26,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
+    <html
+      lang="pt-BR"
+      className={`${quicksand.variable} ${nunitoSans.variable}`}
+    >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="flex min-h-screen flex-col bg-surface font-body-md text-on-surface">
+        {children}
+      </body>
     </html>
   );
 }
