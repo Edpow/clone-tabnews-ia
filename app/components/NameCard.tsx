@@ -6,10 +6,14 @@ import { falar, falarSequencia } from "../../lib/fala";
 
 type Props = {
   nome: string;
+  // Texto falado quando a pronúncia em pt-BR difere da escrita
+  // (ex.: "Ryan" soa "Rian", "Ellen" soa "Élen").
+  pronuncia?: string;
 };
 
-export default function NameCard({ nome }: Props) {
-  const silabas = silabificar(nome);
+export default function NameCard({ nome, pronuncia }: Props) {
+  const silabasExibidas = silabificar(nome);
+  const silabasFaladas = silabificar(pronuncia ?? nome);
   const [ativa, setAtiva] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -32,16 +36,25 @@ export default function NameCard({ nome }: Props) {
     setAtiva(null);
   }
 
+  // Som da sílaba: usa a pronúncia (Ri, É...) quando existir e alinha
+  // por índice; se a contagem divergir, cai na sílaba exibida.
+  function textoFalado(indice: number): string {
+    return silabasFaladas[indice] ?? silabasExibidas[indice];
+  }
+
   function aoClicarNome() {
-    falarSequencia(silabas, {
-      aoIniciarSilaba: destacar,
-      aoEncerrar: limparDestaque,
-    });
+    falarSequencia(
+      silabasExibidas.map((_, indice) => textoFalado(indice)),
+      {
+        aoIniciarSilaba: destacar,
+        aoEncerrar: limparDestaque,
+      },
+    );
   }
 
   function aoClicarSilaba(indice: number) {
     destacar(indice);
-    falar(silabas[indice], { aoEncerrar: limparDestaque });
+    falar(textoFalado(indice), { aoEncerrar: limparDestaque });
   }
 
   return (
@@ -56,7 +69,7 @@ export default function NameCard({ nome }: Props) {
       </button>
 
       <div className="silabas" role="group" aria-label={`Sílabas de ${nome}`}>
-        {silabas.map((silaba, indice) => (
+        {silabasExibidas.map((silaba, indice) => (
           <button
             key={`${silaba}-${indice}`}
             type="button"

@@ -1,6 +1,11 @@
 import NameCard from "./components/NameCard";
 
-const names = ["Edgar", "Rita", "Ryan", "Ellen"];
+const names = [
+  { nome: "Edgar" },
+  { nome: "Rita" },
+  { nome: "Ryan", pronuncia: "Rian" },
+  { nome: "Ellen", pronuncia: "Élen" },
+];
 
 export default function Home() {
   return (
@@ -11,8 +16,8 @@ export default function Home() {
       </p>
       <ul className="lista">
         {names.map((name) => (
-          <li key={name}>
-            <NameCard nome={name} />
+          <li key={name.nome}>
+            <NameCard nome={name.nome} pronuncia={name.pronuncia} />
           </li>
         ))}
       </ul>
