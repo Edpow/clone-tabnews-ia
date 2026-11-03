@@ -5,9 +5,8 @@ import ListaNomes, { type Nome } from "./components/ListaNomes";
 const names: Nome[] = [
   { nome: "Edgar", cor: "amarelo" },
   { nome: "Rita", cor: "verde" },
-  { nome: "Ryan", pronuncia: "Rian", cor: "azul" },
+  { nome: "Ryan", pronuncia: "Rían", cor: "azul" },
   { nome: "Ellen", pronuncia: "Élen", cor: "rosa" },
-  { nome: "Lucas", cor: "cinza" },
 ];
 
 export default function Home() {
