@@ -76,6 +76,15 @@ export function falar(texto: string, opcoes: OpcoesFala = {}): void {
   falarUm(texto, opcoes);
 }
 
+// Cancela qualquer fala em andamento sem iniciar outra
+// (útil antes de abrir o microfone, para o próprio áudio
+// do app não ser captado pelo reconhecimento).
+export function cancelarFala(): void {
+  if (!temSuporte()) return;
+  geracao++;
+  window.speechSynthesis.cancel();
+}
+
 export function falarSequencia(
   textos: string[],
   opcoes: OpcoesSequencia = {},

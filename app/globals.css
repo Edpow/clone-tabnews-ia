@@ -115,20 +115,65 @@ body {
   --cor-silaba: #f7a8c4;
 }
 
-/* Um único espaço por nome: a palavra inteira ou as sílabas,
-   sempre no mesmo lugar. */
+/* Cartão: uma linha com o espaço do nome + botões, e a mensagem
+   de feedback da prática de fala embaixo. */
 .cartao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.linha {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
 }
 
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Um único espaço por nome: a palavra inteira ou as sílabas,
+   sempre no mesmo lugar. */
 .espaco {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 3.6rem;
+}
+
+.silaba-grupo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mensagem {
+  min-height: 1.3rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+.mensagem.ouvindo {
+  color: #c92a2a;
+}
+
+.mensagem.boa {
+  color: #2b8a3e;
+}
+
+.mensagem.ruim {
+  color: #c92a2a;
+}
+
+.mensagem.aviso {
+  color: #b3591e;
 }
 
 .ouvir {
@@ -230,8 +275,88 @@ body {
   }
 }
 
+/* Prática de fala: microfone e resultado. */
+.mic {
+  font-family: inherit;
+  font-size: 0.95rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border: 2px solid #d0d7e2;
+  border-radius: 50%;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.mic:hover {
+  transform: scale(1.08);
+}
+
+.mic:active {
+  transform: scale(0.94);
+}
+
+.mic.ouvindo {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+.mic.correta {
+  background-color: #51cf66;
+  border-color: #51cf66;
+}
+
+.mic.errada {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+/* Anel pulsando enquanto o microfone está aberto. */
+.ouvindo,
+.mic.ouvindo {
+  animation: pulsoMicrofone 1s ease infinite;
+}
+
+@keyframes pulsoMicrofone {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 107, 107, 0);
+  }
+}
+
+/* Resultado da prática no nome e nas sílabas. */
+.nome.correta {
+  background-color: #d3f9d8;
+  color: #2b8a3e;
+}
+
+.nome.errada {
+  background-color: #ffe3e3;
+  color: #c92a2a;
+}
+
+.silaba.correta {
+  background-color: #51cf66;
+  color: #ffffff;
+}
+
+.silaba.errada {
+  background-color: #ff6b6b;
+  color: #ffffff;
+}
+
 .nome:focus-visible,
-.silaba:focus-visible {
+.silaba:focus-visible,
+.mic:focus-visible,
+.ouvir:focus-visible {
   outline: 3px solid #2d6cdf;
   outline-offset: 2px;
 }
