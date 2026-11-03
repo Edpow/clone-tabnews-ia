@@ -10,19 +10,137 @@ body {
   align-items: center;
   justify-content: center;
   font-family: Arial, Helvetica, sans-serif;
-  background-color: #ffffff;
+  background-color: #f7f9fc;
   color: #111111;
 }
 
-ul {
-  list-style: none;
+.pagina {
+  width: 100%;
+  max-width: 640px;
+  padding: 2rem 1rem;
   text-align: center;
 }
 
-li {
+.titulo {
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dica {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  color: #555555;
+}
+
+.lista {
+  list-style: none;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lista li:nth-child(1) {
+  --cor-silaba: #ffd93d;
+}
+
+.lista li:nth-child(2) {
+  --cor-silaba: #74c69d;
+}
+
+.lista li:nth-child(3) {
+  --cor-silaba: #91c7f5;
+}
+
+.lista li:nth-child(4) {
+  --cor-silaba: #f7a8c4;
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nome {
+  font-family: inherit;
   font-size: 3rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0.5rem 0;
+  background: transparent;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.nome:hover {
+  background-color: #eceff4;
+}
+
+.nome:active {
+  transform: scale(0.97);
+}
+
+.silabas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.silaba {
+  font-family: inherit;
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  color: #111111;
+  background-color: var(--cor-silaba, #ffd93d);
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+    background-color 0.12s ease, color 0.12s ease;
+}
+
+.silaba:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+}
+
+.silaba:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: none;
+}
+
+.silaba.ativa {
+  background-color: #111111;
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: none;
+  animation: pulsar 0.35s ease;
+}
+
+@keyframes pulsar {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.nome:focus-visible,
+.silaba:focus-visible {
+  outline: 3px solid #2d6cdf;
+  outline-offset: 2px;
 }
