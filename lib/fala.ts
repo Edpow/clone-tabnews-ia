@@ -7,11 +7,17 @@
 type OpcoesFala = {
   aoIniciar?: () => void;
   aoEncerrar?: () => void;
+  // Velocidade/ tom da voz (0.6 = modo tartaruga, 0.85 = palavra,
+  // 0.75 = sílaba; pitch acima de 1 deixa a voz mais "infantil").
+  rate?: number;
+  pitch?: number;
 };
 
 type OpcoesSequencia = {
   aoIniciarSilaba?: (indice: number) => void;
   aoEncerrar?: () => void;
+  rate?: number;
+  pitch?: number;
 };
 
 let geracao = 0;
@@ -38,9 +44,15 @@ function vozPortugues(): SpeechSynthesisVoice | null {
   );
 }
 
-function criarUtterance(texto: string): SpeechSynthesisUtterance {
+function criarUtterance(
+  texto: string,
+  rate?: number,
+  pitch?: number,
+): SpeechSynthesisUtterance {
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = "pt-BR";
+  if (rate) utterance.rate = rate;
+  if (pitch) utterance.pitch = pitch;
   const voz = vozPortugues();
   if (voz) utterance.voice = voz;
   return utterance;
@@ -53,7 +65,7 @@ function falarUm(texto: string, opcoes: OpcoesFala): void {
   synth.cancel();
   const minhaGeracao = ++geracao;
 
-  const utterance = criarUtterance(texto);
+  const utterance = criarUtterance(texto, opcoes.rate, opcoes.pitch);
   utterance.onstart = () => {
     if (minhaGeracao === geracao) opcoes.aoIniciar?.();
   };
@@ -96,7 +108,7 @@ export function falarSequencia(
   const minhaGeracao = ++geracao;
 
   const utterances = textos.map((texto, indice) => {
-    const utterance = criarUtterance(texto);
+    const utterance = criarUtterance(texto, opcoes.rate, opcoes.pitch);
     utterance.onstart = () => {
       if (minhaGeracao === geracao) opcoes.aoIniciarSilaba?.(indice);
     };

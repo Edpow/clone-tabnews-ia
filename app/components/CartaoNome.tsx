@@ -9,9 +9,17 @@ import { falouCorreto } from "../../lib/comparar";
 type Props = {
   nome: string;
   pronuncia?: string;
-  // true  = a palavra aparece dividida em sílabas clicáveis;
+  // Paleta da palavra no design LudoLeitura (amarelo/verde/azul/rosa/cinza).
+  cor: string;
+  // true = a palavra aparece dividida em sílabas clicáveis;
   // false = a palavra aparece inteira (visão inicial).
   destacarSilabas: boolean;
+  // Destaque do Modo Tartaruga.
+  iluminado: boolean;
+  // Notifica o que está sendo falado (toast) e o nome "soletrado"
+  // (progresso "Treino de Hoje").
+  aoFalar: (texto: string) => void;
+  aoLeitura: () => void;
 };
 
 // O que a criança está praticando: uma sílaba (índice) ou o nome inteiro.
@@ -26,10 +34,22 @@ type Feedback = {
   aceitavel?: boolean;
 };
 
-export default function NameCard({
+const PONTOS: Record<string, string> = {
+  amarelo: "bg-primary",
+  verde: "bg-secondary",
+  azul: "bg-tertiary",
+  rosa: "bg-error",
+  cinza: "bg-outline",
+};
+
+export default function CartaoNome({
   nome,
   pronuncia,
+  cor,
   destacarSilabas,
+  iluminado,
+  aoFalar,
+  aoLeitura,
 }: Props) {
   const silabasExibidas = silabificar(nome);
   const silabasFaladas = silabificar(pronuncia ?? nome);
@@ -80,20 +100,36 @@ export default function NameCard({
     return silabasFaladas[indice] ?? silabasExibidas[indice];
   }
 
+  function falarSilaba(indice: number) {
+    falar(textoFalado(indice), {
+      rate: 0.75,
+      pitch: 1.15,
+      aoEncerrar: limparDestaque,
+    });
+    aoFalar(`"${textoFalado(indice).toUpperCase()}"`);
+    aoLeitura();
+  }
+
   // Nome inteiro numa fala só, com a pronúncia natural ("Rian", "Élen").
   function falarNomeCompleto() {
-    falar(pronuncia ?? nome);
+    falar(pronuncia ?? nome, { rate: 0.85, pitch: 1.05 });
+    aoFalar(`"${nome.toUpperCase()}"`);
+    aoLeitura();
   }
 
   // Botão 🔊: com as sílabas visíveis, fala sílaba por sílaba destacando
   // cada uma na sequência; sem sílabas, fala o nome numa fala só.
   function aoClicarOuvir() {
+    aoFalar(`"${nome.toUpperCase()}"`);
+    aoLeitura();
     if (destacarSilabas) {
       falarSequencia(
         silabasExibidas.map((_, indice) => textoFalado(indice)),
         {
           aoIniciarSilaba: destacar,
           aoEncerrar: limparDestaque,
+          rate: 0.75,
+          pitch: 1.15,
         },
       );
     } else {
@@ -103,7 +139,7 @@ export default function NameCard({
 
   function aoClicarSilaba(indice: number) {
     destacar(indice);
-    falar(textoFalado(indice), { aoEncerrar: limparDestaque });
+    falarSilaba(indice);
   }
 
   // Formas aceitas na comparação: sílaba falada e exibida (Ri/Ry),
@@ -128,7 +164,8 @@ export default function NameCard({
   function mostrarAviso(alvo: Alvo, texto: string, aceitavel: boolean) {
     setOuvindo(null);
     setFeedback({ alvo, status: "aviso", texto, aceitavel });
-    falar(texto);
+    falar(texto, { rate: 0.9 });
+    aoFalar(texto);
     agendarLimpeza();
   }
 
@@ -154,7 +191,8 @@ export default function NameCard({
         : `Ouvi: "${ouvida}" — Tente de novo ❌`,
       aceitavel: !acertou,
     });
-    falar(acertou ? "Muito bem!" : "Tente de novo");
+    falar(acertou ? "Muito bem!" : "Tente de novo", { rate: 0.9 });
+    aoFalar(acertou ? "Muito bem! ✅" : "Tente de novo ❌");
     agendarLimpeza();
   }
 
@@ -185,7 +223,8 @@ export default function NameCard({
       texto: "Muito bem! ✅",
       aceitavel: false,
     });
-    falar("Muito bem!");
+    falar("Muito bem!", { rate: 0.9 });
+    aoFalar("Muito bem! ✅");
     agendarLimpeza();
   }
 
@@ -224,8 +263,7 @@ export default function NameCard({
     return status === "correto" ? "✅" : status === "errado" ? "❌" : "🎤";
   }
 
-  const ouvindoAlvo = (alvo: Alvo) =>
-    ouvindo === alvo ? " ouvindo" : "";
+  const ouvindoAlvo = (alvo: Alvo) => (ouvindo === alvo ? " ouvindo" : "");
 
   const textoMensagem =
     ouvindo !== null ? "Ouvindo..." : (feedback?.texto ?? "");
@@ -238,67 +276,71 @@ export default function NameCard({
           ? "ruim"
           : "aviso";
 
-  return (
-    <div className="cartao">
-      <div className="linha">
-        {/* Um único espaço: a palavra inteira ou as sílabas no mesmo lugar. */}
-        <div className="espaco">
-          {destacarSilabas ? (
-            <div
-              className="silabas"
-              role="group"
-              aria-label={`Sílabas de ${nome}`}
-            >
-              {silabasExibidas.map((silaba, indice) => (
-                <div className="silaba-grupo" key={`${silaba}-${indice}`}>
-                  <button
-                    type="button"
-                    className={`silaba${
-                      ativa === indice ? " ativa" : ""
-                    }${ouvindoAlvo(indice)}${statusClasse(indice)}`}
-                    onClick={() => aoClicarSilaba(indice)}
-                    aria-label={`Ouvir a sílaba ${silaba}`}
-                  >
-                    {silaba}
-                  </button>
-                  {suporteVoz && (
-                    <button
-                      type="button"
-                      className={`mic${ouvindoAlvo(indice)}${statusClasse(indice)}`}
-                      onClick={() => aoPraticar(indice)}
-                      aria-label={`Falar a sílaba ${silaba}`}
-                    >
-                      {icone(indice)}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <button
-              type="button"
-              className={`nome${ouvindoAlvo("palavra")}${statusClasse("palavra")}`}
-              onClick={falarNomeCompleto}
-              aria-label={`Ouvir o nome ${nome} completo`}
-            >
-              {nome}
-            </button>
-          )}
-        </div>
+  const legenda = `${silabasExibidas.length} sílabas · ${silabasExibidas.join(" + ")}`;
 
-        <div className="acoes">
+  return (
+    <div
+      className={`flex flex-col items-center rounded-[1rem] p-4 shadow-sm transition-all duration-200 ${
+        iluminado ? "bg-primary-container/20" : "bg-surface-container-low/70"
+      }`}
+    >
+      <div className="flex w-full items-center justify-center gap-2">
+        {destacarSilabas ? (
+          silabasExibidas.map((silaba, indice) => (
+            <div
+              key={`${silaba}-${indice}`}
+              className="flex flex-col items-center gap-1"
+            >
+              <button
+                type="button"
+                className={`syllable-tile tile-${cor}${
+                  ativa === indice ? " ativa" : ""
+                }${ouvindoAlvo(indice)}${statusClasse(indice)}`}
+                onClick={() => aoClicarSilaba(indice)}
+                aria-label={`Ouvir a sílaba ${silaba}`}
+              >
+                {silaba}
+              </button>
+              {suporteVoz && (
+                <button
+                  type="button"
+                  className={`mic-btn${ouvindoAlvo(indice)}${statusClasse(indice)}`}
+                  onClick={() => aoPraticar(indice)}
+                  aria-label={`Falar a sílaba ${silaba}`}
+                >
+                  {icone(indice)}
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
           <button
             type="button"
-            className="ouvir"
+            className={`syllable-tile tile-${cor} grow${ouvindoAlvo(
+              "palavra",
+            )}${statusClasse("palavra")}`}
+            onClick={falarNomeCompleto}
+            aria-label={`Ouvir o nome ${nome} completo`}
+          >
+            {nome}
+          </button>
+        )}
+
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            className="audio-btn"
             onClick={aoClicarOuvir}
             aria-label={`Tocar o nome ${nome}`}
           >
-            🔊
+            <span className="material-symbols-outlined text-[26px]">
+              volume_up
+            </span>
           </button>
           {suporteVoz && (
             <button
               type="button"
-              className={`mic${ouvindoAlvo("palavra")}${statusClasse("palavra")}`}
+              className={`mic-btn${ouvindoAlvo("palavra")}${statusClasse("palavra")}`}
               onClick={() => aoPraticar("palavra")}
               aria-label={`Falar o nome ${nome}`}
             >
@@ -306,6 +348,11 @@ export default function NameCard({
             </button>
           )}
         </div>
+      </div>
+
+      <div className="mt-2 flex items-center gap-1 font-label-sm text-on-surface-variant/70">
+        <span className={`h-1.5 w-1.5 rounded-full ${PONTOS[cor] ?? "bg-primary"}`} />
+        <span>{legenda}</span>
       </div>
 
       <p className={`mensagem ${classeMensagem}`} aria-live="polite">
