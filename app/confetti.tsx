@@ -60,7 +60,10 @@ export default function Confetti() {
       height={height}
       run={run}
       recycle={false}
-      numberOfPieces={Math.min(MAX_PIECES, Math.max(MIN_PIECES, numberOfPieces))}
+      numberOfPieces={Math.min(
+        MAX_PIECES,
+        Math.max(MIN_PIECES, numberOfPieces),
+      )}
       style={{ position: "fixed", inset: 0 }}
     />
   );

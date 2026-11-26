@@ -39,7 +39,9 @@ async function PublishedTotal() {
     <p className="total">
       Total de trabalhos publicados no TabNews:{" "}
       <strong>
-        {total === null ? "não foi possível carregar" : total.toLocaleString("pt-BR")}
+        {total === null
+          ? "não foi possível carregar"
+          : total.toLocaleString("pt-BR")}
       </strong>
     </p>
   );
@@ -64,15 +66,20 @@ export default function Home() {
 
         <h1 className="phrase">
           Estamos neste exato momento reconstruindo o TabNews, um lugar na
-          internet para quem trabalha com tecnologia e precisa de conteúdos,
-          com valor concreto
+          internet para quem trabalha com tecnologia e precisa de conteúdos, com
+          valor concreto
         </h1>
 
         <Suspense fallback={<TotalFallback />}>
           <PublishedTotal />
         </Suspense>
 
-        <a className="official-link" href={TABNEWS_URL} target="_blank" rel="noreferrer">
+        <a
+          className="official-link"
+          href={TABNEWS_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
           Conheça o site oficial: tabnews.com.br ↗
         </a>
       </section>
