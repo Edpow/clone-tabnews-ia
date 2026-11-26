@@ -1,14 +1,25 @@
-import Confetti from "./confetti";
+import { Suspense } from "react";
+import ConfettiLazy from "./confetti-lazy";
 
-const TABNEWS_API_URL = "https://api.tabnews.com.br/v1/contents?page=1&per_page=1";
+const TABNEWS_API_URL =
+  process.env.TABNEWS_API_URL ??
+  "https://api.tabnews.com.br/v1/contents?page=1&per_page=1";
 const TABNEWS_URL = "https://www.tabnews.com.br";
 
-// Garante leitura da API a cada acesso (renderização por request).
+// O total muda devagar: 60s de Data Cache evitam bater na API a cada acesso.
+const TOTAL_REVALIDATE_SECONDS = 60;
+// Sem timeout, uma API lenta pendura o render (e o request) indefinidamente.
+const TOTAL_TIMEOUT_MS = 5000;
+
+// Renderiza por request, mas transmite o shell antes de esperar a API.
 export const dynamic = "force-dynamic";
 
 async function getPublishedTotal(): Promise<number | null> {
   try {
-    const response = await fetch(TABNEWS_API_URL, { cache: "no-store" });
+    const response = await fetch(TABNEWS_API_URL, {
+      next: { revalidate: TOTAL_REVALIDATE_SECONDS },
+      signal: AbortSignal.timeout(TOTAL_TIMEOUT_MS),
+    });
     if (!response.ok) return null;
 
     const total = response.headers.get("x-pagination-total-rows");
@@ -21,12 +32,32 @@ async function getPublishedTotal(): Promise<number | null> {
   }
 }
 
-export default async function Home() {
+async function PublishedTotal() {
   const total = await getPublishedTotal();
 
   return (
+    <p className="total">
+      Total de trabalhos publicados no TabNews:{" "}
+      <strong>
+        {total === null ? "não foi possível carregar" : total.toLocaleString("pt-BR")}
+      </strong>
+    </p>
+  );
+}
+
+function TotalFallback() {
+  return (
+    <p className="total" aria-busy="true">
+      Total de trabalhos publicados no TabNews:{" "}
+      <span className="total-skeleton" aria-hidden="true" />
+    </p>
+  );
+}
+
+export default function Home() {
+  return (
     <main className="construction">
-      <Confetti />
+      <ConfettiLazy />
 
       <section className="card">
         <p className="badge">🚧 Página em Construção</p>
@@ -37,12 +68,9 @@ export default async function Home() {
           com valor concreto
         </h1>
 
-        <p className="total">
-          Total de trabalhos publicados no TabNews:{" "}
-          <strong>
-            {total === null ? "não foi possível carregar" : total.toLocaleString("pt-BR")}
-          </strong>
-        </p>
+        <Suspense fallback={<TotalFallback />}>
+          <PublishedTotal />
+        </Suspense>
 
         <a className="official-link" href={TABNEWS_URL} target="_blank" rel="noreferrer">
           Conheça o site oficial: tabnews.com.br ↗

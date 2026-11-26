@@ -58,6 +58,29 @@ body {
   font-size: 1.5rem;
 }
 
+/* Reserva o espaço do total enquanto ele é transmitido (evita layout shift). */
+.total-skeleton {
+  display: inline-block;
+  width: 7ch;
+  height: 1.5rem;
+  vertical-align: -0.15em;
+  border-radius: 4px;
+  background-color: #e5e5e5;
+  animation: total-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes total-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .total-skeleton {
+    animation: none;
+  }
+}
+
 .official-link {
   display: inline-block;
   font-size: 1rem;
